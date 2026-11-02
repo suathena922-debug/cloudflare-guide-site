@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>目標理財規劃器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E🎯%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f3f6f5;--card:#fff;--ink:#14282b;--mute:#5b6e70;--line:#d9e2e1;--pri:#0f5c5c;--pri2:#d8ecea;--gold:#c9831a;--bad:#b3402f;--good:#1f7a4d;--field:#f8fbfa;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1819;--card:#16262a;--ink:#e6f0ef;--mute:#93aaab;--line:#2a4044;--pri:#5cc2b8;--pri2:#1d3a3c;--gold:#e8a94a;--bad:#ef8a78;--good:#6fd29d;--field:#112024}}
+:root[data-theme="dark"]{--bg:#0e1819;--card:#16262a;--ink:#e6f0ef;--mute:#93aaab;--line:#2a4044;--pri:#5cc2b8;--pri2:#1d3a3c;--gold:#e8a94a;--bad:#ef8a78;--good:#6fd29d;--field:#112024}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 "Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:26px;margin:8px 0 4px;letter-spacing:.02em}
+.sub{color:var(--mute);margin:0 0 18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:999px;font:inherit;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--pri);color:var(--bg);border-color:var(--pri)}
+.chip:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:18px;align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+.panel h2{font-size:16px;margin:0 0 12px}
+label{display:block;font-size:13px;color:var(--mute);margin:12px 0 4px}
+label b{color:var(--pri);font-weight:500;font-size:12px}
+input,select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--field);color:var(--ink);font:inherit;font-variant-numeric:tabular-nums}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:620px){.kpis{grid-template-columns:1fr}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.kpi.main{background:var(--pri);border-color:var(--pri);color:var(--bg)}
+.kpi small{display:block;opacity:.8;font-size:12.5px}
+.kpi strong{display:block;font-size:24px;font-variant-numeric:tabular-nums;margin:2px 0}
+.kpi span{font-size:12.5px;opacity:.8}
+.bar{height:12px;border-radius:6px;background:var(--pri2);overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--pri)}
+.stack>*+*{margin-top:18px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--mute);margin-top:6px}
+.legend s{display:inline-block;width:18px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px;text-decoration:none}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--mute);font-size:11px;font-family:inherit}
+.tip{padding:12px 14px;border-left:4px solid var(--pri);background:var(--pri2);border-radius:0 8px 8px 0;margin:10px 0}
+.tip.warn{border-color:var(--gold)}.tip.bad{border-color:var(--bad)}.tip.good{border-color:var(--good)}
+.tip b{display:block}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:460px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+tr.cur td{background:var(--pri2);font-weight:700}
+.note{font-size:12.5px;color:var(--mute)}
+.formula{font-size:12.5px;color:var(--mute);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>目標理財規劃器</h1>
+<p class="sub">設定一個目標，用 PV（現值）、FV（終值）、PMT（每期投入）算出該怎麼存，並看到差距與調整建議。</p>
+<div class="chips" id="chips" role="group" aria-label="目標範本"></div>
+<div class="grid">
+<section class="panel" aria-label="輸入">
+<h2>你的目標</h2>
+<label for="name">目標名稱</label><input id="name" value="退休金">
+<label for="target">目標金額（以今日購買力計） <b>FV</b></label><input id="target" type="number" inputmode="numeric" min="0" value="20000000">
+<div class="row2">
+<div><label for="years">達成年數</label><input id="years" type="number" min="1" max="60" step="1" value="25"></div>
+<div><label for="rate">預期年報酬率 %</label><input id="rate" type="number" step="0.1" min="0" max="30" value="5"></div>
+</div>
+<label for="pv">目前已準備的資金 <b>PV</b></label><input id="pv" type="number" inputmode="numeric" min="0" value="500000">
+<label for="pmt">目前每月可投入 <b>PMT</b></label><input id="pmt" type="number" inputmode="numeric" min="0" value="15000">
+<div class="row2">
+<div><label for="inf">年通膨率 %</label><input id="inf" type="number" step="0.1" min="0" max="15" value="2">
+</div>
+<div><label for="inc">每月收入（選填）</label><input id="inc" type="number" inputmode="numeric" min="0" value="80000"></div>
+</div>
+<label for="when">投入時點</label>
+<select id="when"><option value="0">月底投入</option><option value="1">月初投入</option></select>
+<p class="formula">以月複利計算：i = 年報酬率 ÷ 12，n = 年數 × 12。<br>FV = PV(1+i)ⁿ + PMT × [(1+i)ⁿ − 1] ÷ i</p>
+</section>
+<div class="stack" id="out"></div>
+</div>
+<p class="note" style="margin-top:22px">本工具為試算與教育用途，報酬率為假設值、實際投資有波動與虧損風險，不構成投資建議。</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>'NT$ '+Math.round(n).toLocaleString('zh-TW');
+const wan=n=>(n/10000).toLocaleString('zh-TW',{maximumFractionDigits:0})+' 萬';
+const P={'退休金':[20000000,25,5,500000,15000],'買房頭期款':[3000000,7,4,300000,25000],'子女教育金':[2000000,15,5,100000,8000],'旅行基金':[300000,3,2,20000,7000],'緊急預備金':[360000,2,1.5,50000,10000]};
+function fv(pv,pmt,i,n,t){if(i===0)return pv+pmt*n;const g=Math.pow(1+i,n);return pv*g+pmt*(g-1)/i*(1+i*t)}
+function pmtReq(pv,F,i,n,t){if(i===0)return(F-pv)/n;const g=Math.pow(1+i,n);return(F-pv*g)*i/((g-1)*(1+i*t))}
+function nper(pv,pmt,F,i,t){for(let m=0;m<=1200;m++)if(fv(pv,pmt,i,m,t)>=F)return m;return null}
+function rateReq(pv,pmt,F,n,t){if(fv(pv,pmt,.4/12,n,t)<F)return null;let lo=0,hi=.4;for(let k=0;k<50;k++){const m=(lo+hi)/2;fv(pv,pmt,m/12,n,t)<F?lo=m:hi=m}return hi}
+const num=id=>Math.max(0,parseFloat($(id).value)||0);
+function chart(n,i,t,pv,pmt,pmtNeed,F,yrs){
+const W=600,H=260,L=48,R=12,T=14,B=28,max=Math.max(F,fv(pv,pmt,i,n,t),fv(pv,pmtNeed,i,n,t))*1.05||1;
+const step=Math.max(1,Math.round(n/48)),ms=[];for(let m=0;m<n;m+=step)ms.push(m);ms.push(n);
+const X=m=>L+(W-L-R)*m/n,Y=v=>T+(H-T-B)*(1-v/max);
+const line=f=>ms.map(m=>X(m).toFixed(1)+','+Y(f(m)).toFixed(1)).join(' ');
+let g='';for(let k=0;k<=4;k++){const v=max*k/4;g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${wan(v)}</text>`}
+[0,.5,1].forEach(f=>{g+=`<text x="${X(n*f)}" y="${H-8}" text-anchor="${f==0?'start':f==1?'end':'middle'}">${(yrs*f).toFixed(f==.5&&yrs%2?1:0)} 年</text>`});
+return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="資產累積走勢圖">${g}
+<line x1="${L}" x2="${W-R}" y1="${Y(F)}" y2="${Y(F)}" stroke="var(--gold)" stroke-width="2" stroke-dasharray="6 4"/>
+<polyline fill="none" stroke="var(--pri)" stroke-width="3" points="${line(m=>fv(pv,pmt,i,m,t))}"/>
+<polyline fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="2 4" points="${line(m=>fv(pv,pmtNeed,i,m,t))}"/></svg>
+<div class="legend"><span><s style="border-color:var(--pri)"></s>照目前計畫</span><span><s style="border-color:var(--ink);border-top-style:dotted"></s>達標所需路徑</span><span><s style="border-color:var(--gold);border-top-style:dashed"></s>目標（含通膨）</span></div>`}
+function render(){
+const yrs=Math.max(1,num('years')),n=Math.round(yrs*12),r=num('rate')/100,i=r/12,inf=num('inf')/100,t=+$('when').value;
+const pv=num('pv'),pmt=num('pmt'),inc=num('inc'),F=num('target')*Math.pow(1+inf,yrs);
+const proj=fv(pv,pmt,i,n,t),need=Math.max(0,pmtReq(pv,F,i,n,t)),gap=F-proj,ok=gap<=0,pct=Math.min(100,proj/F*100||0);
+const lump=Math.max(0,F/Math.pow(1+i,n)-fv(0,pmt,i,n,t)/Math.pow(1+i,n));
+const g=Math.pow(1+i,n),extraLump=Math.max(0,gap/g);
+const months=nper(pv,pmt,F,i,t),rq=rateReq(pv,pmt,F,n,t);
+let tips='';
+if(ok){tips+=`<div class="tip good"><b>照目前計畫可以達標</b>預估到第 ${yrs} 年累積 ${fmt(proj)}，比含通膨的目標多出 ${fmt(-gap)}。你可以把每月投入降到 ${fmt(need)}，或提前達成目標。</div>`}
+else{tips+=`<div class="tip bad"><b>目前計畫會差 ${fmt(gap)}</b>預估累積 ${fmt(proj)}，達成率 ${pct.toFixed(0)}%。下面四種方法，任選一種或組合都能補上差距：</div>`;
+tips+=`<div class="tip"><b>1. 每月多存 ${fmt(need-pmt)}</b>把每月投入從 ${fmt(pmt)} 提高到 ${fmt(need)}。</div>`;
+tips+=`<div class="tip"><b>2. 今天一次投入 ${fmt(extraLump)}</b>多放進去的錢會複利 ${yrs} 年，越早放效果越大。</div>`;
+tips+=`<div class="tip"><b>3. ${months?'延長到 '+(months/12).toFixed(1)+' 年':'時間延長仍無法達標'}</b>${months?`目前每月 ${fmt(pmt)} 不變，多等 ${((months-n)/12).toFixed(1)} 年即可達標。`:'每月投入太低，建議先提高 PMT。'}</div>`;
+tips+=`<div class="tip ${rq&&rq>.07?'warn':''}"><b>4. 報酬率需達 ${rq?(rq*100).toFixed(1)+'%':'40% 以上'}</b>${rq&&rq>.07?'這已高於長期穩健假設，風險很大，不建議只靠拉高報酬補差距。':'投入與時間不變，需要這個年化報酬才能達標。'}</div>`}
+if(inc>0){const s=need/inc*100;tips+=`<div class="tip ${s>40?'bad':s>25?'warn':'good'}"><b>達標所需月投入佔收入 ${s.toFixed(0)}%</b>${s>40?'比例偏高，建議延長年數或調降目標，避免影響生活與緊急預備金。':s>25?'有一定壓力，建議搭配自動扣款，並先確認有 3–6 個月生活費的預備金。':'負擔在合理範圍，用自動扣款最容易持續。'}</div>`}
+if(r>.07)tips+=`<div class="tip warn"><b>報酬率假設偏樂觀</b>長期規劃通常用 3–6% 較保守，可到下方情境表看看報酬較低時要存多少。</div>`;
+const rows=[Math.max(0,r*100-3),Math.max(0,r*100-1.5),r*100,r*100+1.5].map((x,k)=>{const nd=pmtReq(pv,F,x/100/12,n,t);return `<tr class="${k==2?'cur':''}"><td>${x.toFixed(1)}%${k==2?'（你的假設）':''}</td><td>${fmt(Math.max(0,nd))}</td><td>${fmt(fv(pv,pmt,x/100/12,n,t))}</td><td>${fv(pv,pmt,x/100/12,n,t)>=F?'達標':'未達標'}</td></tr>`}).join('');
+$('out').innerHTML=`
+<div class="kpis">
+<div class="kpi main"><small>達標所需每月投入 PMT</small><strong>${fmt(need)}</strong><span>現在每月投入 ${fmt(pmt)}</span></div>
+<div class="kpi"><small>照目前計畫的終值 FV</small><strong>${fmt(proj)}</strong><span>${yrs} 年後</span></div>
+<div class="kpi"><small>目標終值（含通膨）FV</small><strong>${fmt(F)}</strong><span>相當於今日 ${fmt(num('target'))}</span></div>
+</div>
+<section class="panel"><h2>「${$('name').value||'我的目標'}」進度預估：${pct.toFixed(0)}%</h2>
+<div class="bar" role="progressbar" aria-valuenow="${pct.toFixed(0)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+<p class="note">已投入本金約 ${fmt(pv+pmt*n)}，其中複利貢獻約 ${fmt(Math.max(0,proj-pv-pmt*n))}。若完全不再每月投入，只靠現有資金，終值為 ${fmt(fv(pv,0,i,n,t))}。</p>
+${chart(n,i,t,pv,pmt,need,F,yrs)}</section>
+<section class="panel"><h2>分析與建議</h2>${tips}</section>
+<section class="panel"><h2>不同報酬率下的結果</h2><div class="scroll"><table><thead><tr><th>年報酬率</th><th>達標所需每月 PMT</th><th>目前計畫的 FV</th><th>結果</th></tr></thead><tbody>${rows}</tbody></table></div>
+<p class="note">若想一次到位：今天一次投入約 ${fmt(F/g)} 就能在 ${yrs} 年後達到目標（PV，不計每月投入）。</p></section>`}
+const chips=$('chips');
+Object.keys(P).forEach((k,idx)=>{const b=document.createElement('button');b.className='chip';b.textContent=k;b.setAttribute('aria-pressed',idx==0);b.onclick=()=>{const v=P[k];$('name').value=k;['target','years','rate','pv','pmt'].forEach((id,j)=>$(id).value=v[j]);[...chips.children].forEach(c=>c.setAttribute('aria-pressed',c===b));render()};chips.appendChild(b)});
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',render));
+render();
+</script>
+</body>
+</html>
