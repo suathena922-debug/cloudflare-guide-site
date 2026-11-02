@@ -1,0 +1,6 @@
+name = "cloudflare-guide-site"
+main = "index.html"
+compatibility_date = "2026-11-01"
+
+[site]
+bucket = "./"
