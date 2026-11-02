@@ -1,6 +1,6 @@
 name = "cloudflare-guide-site"
 main = "index.js"
-compatibility_date = "20261101"
+compatibility_date = "2026-11-01"
 
 [assets]
-directory = "./"
+directory = "."
